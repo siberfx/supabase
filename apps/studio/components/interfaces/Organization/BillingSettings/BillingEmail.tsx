@@ -2,7 +2,7 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { toast } from 'sonner'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@ui/components/shadcn/ui/form'
+import { Form, FormControl, FormField } from '@ui/components/shadcn/ui/form'
 import { useParams } from 'common'
 import {
   ScaffoldSection,
@@ -19,6 +19,8 @@ import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { FormMessage_Shadcn_, Input_Shadcn_ } from 'ui'
+import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
+import { InfoTooltip } from 'ui-patterns/info-tooltip'
 import {
   MultiSelector,
   MultiSelectorContent,
@@ -26,14 +28,12 @@ import {
   MultiSelectorTrigger,
 } from 'ui-patterns/multi-select'
 import { z } from 'zod'
-import { InfoTooltip } from 'ui-patterns/info-tooltip'
-
-const formSchema = z.object({
-  billingEmail: z.string().email().optional(),
-  additionalBillingEmails: z.string().email('email').array(),
-})
 
 const FORM_ID = 'org-billing-email'
+const formSchema = z.object({
+  billingEmail: z.string().email('Please provide a valid email address').optional(),
+  additionalBillingEmails: z.string().email({ message: 'invalid_email' }).array().default([]),
+})
 
 const BillingEmail = () => {
   const { slug } = useParams()
@@ -47,11 +47,8 @@ const BillingEmail = () => {
     'stripe.subscriptions'
   )
 
-  const {
-    data: billingCustomer,
-    error: errorLoadingBillingCustomer,
-    isLoading: loadingBillingCustomer,
-  } = useOrganizationCustomerProfileQuery({ slug }, { enabled: canReadBillingEmail })
+  const { data: billingCustomer, isLoading: loadingBillingCustomer } =
+    useOrganizationCustomerProfileQuery({ slug }, { enabled: canReadBillingEmail })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,12 +57,9 @@ const BillingEmail = () => {
       additionalBillingEmails: billingCustomer?.additional_emails ?? [],
     },
   })
-
-  useEffect(() => {
-    if (billingCustomer) {
-      form.setValue('additionalBillingEmails', billingCustomer.additional_emails ?? [])
-    }
-  }, [billingCustomer])
+  const { additionalBillingEmails } = form.watch()
+  const { errors } = form.formState
+  const additionalEmailsError = errors.additionalBillingEmails ?? []
 
   const { mutate: updateOrganization, isLoading: isUpdating } = useOrganizationUpdateMutation()
 
@@ -91,6 +85,13 @@ const BillingEmail = () => {
     )
   }
 
+  useEffect(() => {
+    if (billingCustomer) {
+      form.setValue('additionalBillingEmails', billingCustomer.additional_emails ?? [])
+    }
+  }, [billingCustomer])
+
+  // [TODO] Update properly
   if (!canReadBillingEmail) return null
 
   return (
@@ -105,11 +106,7 @@ const BillingEmail = () => {
       </ScaffoldSectionDetail>
       <ScaffoldSectionContent>
         <Form {...form}>
-          <form
-            id={FORM_ID}
-            onSubmit={form.handleSubmit(onUpdateOrganizationEmail)}
-            className="space-y-8"
-          >
+          <form id={FORM_ID} onSubmit={form.handleSubmit(onUpdateOrganizationEmail)}>
             <FormPanel
               footer={
                 <div className="flex py-4 px-8">
@@ -134,8 +131,7 @@ const BillingEmail = () => {
                     control={form.control}
                     name="billingEmail"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email address</FormLabel>
+                      <FormItemLayout label="Email address">
                         <FormControl>
                           <Input_Shadcn_
                             type="email"
@@ -145,7 +141,7 @@ const BillingEmail = () => {
                           />
                         </FormControl>
                         <FormMessage_Shadcn_ />
-                      </FormItem>
+                      </FormItemLayout>
                     )}
                   />
 
@@ -153,14 +149,17 @@ const BillingEmail = () => {
                     control={form.control}
                     name="additionalBillingEmails"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1">
-                          <span>Additional emails</span>
-
-                          <InfoTooltip>
-                            These email addresses will be CC'd in automated invoice emails.
-                          </InfoTooltip>
-                        </FormLabel>
+                      <FormItemLayout
+                        hideMessage
+                        label={
+                          <div className="flex items-center gap-x-1">
+                            <span>Additional emails</span>
+                            <InfoTooltip side="bottom">
+                              These email addresses will be CC'd in automated invoice emails.
+                            </InfoTooltip>
+                          </div>
+                        }
+                      >
                         <FormControl>
                           <MultiSelector values={field.value} onValuesChange={field.onChange}>
                             <MultiSelectorTrigger
@@ -175,8 +174,18 @@ const BillingEmail = () => {
                             </MultiSelectorContent>
                           </MultiSelector>
                         </FormControl>
-                        <FormMessage_Shadcn_ />
-                      </FormItem>
+                        {/* [Joshen] Manually construct the message here as MultiSelector doesn't handle array errors from RHF atm */}
+                        {Array.isArray(additionalEmailsError) &&
+                          additionalEmailsError.length > 0 && (
+                            <div className="flex flex-col gap-y-1 mt-2">
+                              {additionalEmailsError.map((x, idx) => (
+                                <p key={`email-error-${idx}`} className="text-sm text-destructive">
+                                  "{additionalBillingEmails[idx]}" is not a valid email address
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                      </FormItemLayout>
                     )}
                   />
                 </FormSectionContent>
