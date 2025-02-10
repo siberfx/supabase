@@ -4700,6 +4700,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/system/projects/{ref}/restart': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Restart project database [System API] */
+    post: operations['SystemRestartController_restartProject']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/system/projects/{ref}/run-lints': {
     parameters: {
       query?: never
@@ -8482,7 +8499,7 @@ export interface components {
       walg_enabled: boolean
     }
     BillingCustomerUpdateBody: {
-      additional_emails: string[] | null
+      additional_emails: string[]
       address?: components['schemas']['CustomerBillingAddress']
     }
     /** @enum {string} */
@@ -8853,6 +8870,40 @@ export interface components {
       publish_truncate?: boolean
       publish_update?: boolean
       tables?: string[] | null
+    }
+    CreateReplicationPipelineBody: {
+      /** @description Pipeline config */
+      config: {
+        config: {
+          max_fill_secs: number
+          max_size: number
+        }
+      }
+      /** @description Publication name */
+      publication_name: string
+      /** @description Sink id */
+      sink_id: number
+      /** @description Source id */
+      source_id: number
+    }
+    CreateReplicationPublicationBody: {
+      /** @description Publication name */
+      name: string
+      /** @description Publication tables */
+      tables: {
+        name: string
+        schema: string
+      }[]
+    }
+    CreateReplicationSinkBody: {
+      /** @description BigQuery dataset id */
+      dataset_id: string
+      /** @description BigQuery project id */
+      project_id: string
+      /** @description BigQuery service account key */
+      service_account_key: string
+      /** @description Sink name */
+      sink_name: string
     }
     CreateSchemaBody: {
       name: string
@@ -9348,14 +9399,15 @@ export interface components {
       query: string
     }
     FunctionDeployBody: {
-      file: Record<string, never>[]
-      metadata: {
-        entrypoint_path?: string
-        import_map_path?: string
-        name?: string
-        static_patterns?: string[]
-        verify_jwt?: boolean
-      }
+      file: string[]
+      metadata: components['schemas']['FunctionMetadata']
+    }
+    FunctionMetadata: {
+      entrypoint_path: string
+      import_map_path?: string
+      name?: string
+      static_patterns?: string[]
+      verify_jwt?: boolean
     }
     FunctionResponse: {
       compute_multiplier?: number
@@ -11162,7 +11214,7 @@ export interface components {
        */
       supabase_org_id: string
     }
-    RestartProjectInfo: {
+    RestartProjectBodyDto: {
       database_identifier?: string
     }
     RestartServiceRequest: {
@@ -12255,7 +12307,6 @@ export interface components {
       opt_in_tags?: 'AI_SQL_GENERATOR_OPT_IN'[]
     }
     UpdateOrganizationResponse: {
-      additional_billing_emails?: string[]
       billing_email?: string
       id: number
       name: string
@@ -21440,15 +21491,12 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path: {
-        /** @description Project ref */
-        ref: string
-      }
+      path?: never
       cookie?: never
     }
     requestBody: {
       content: {
-        'application/json': components['schemas']['RestartProjectInfo']
+        'application/json': components['schemas']['RestartProjectBodyDto']
       }
     }
     responses: {
@@ -21929,7 +21977,9 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -21961,10 +22011,16 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+      }
       cookie?: never
     }
-    requestBody?: never
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReplicationPipelineBody']
+      }
+    }
     responses: {
       201: {
         headers: {
@@ -21991,7 +22047,10 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        pipeline_id: number
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22021,7 +22080,10 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        pipeline_id: number
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22051,7 +22113,10 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        pipeline_id: number
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22083,7 +22148,10 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        pipeline_id: number
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22113,7 +22181,9 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22145,10 +22215,16 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+      }
       cookie?: never
     }
-    requestBody?: never
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReplicationSinkBody']
+      }
+    }
     responses: {
       201: {
         headers: {
@@ -22175,7 +22251,10 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+        sink_id: number
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22205,7 +22284,9 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22238,7 +22319,9 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22271,7 +22354,10 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+        source_id: number
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22304,10 +22390,17 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+        source_id: number
+      }
       cookie?: never
     }
-    requestBody?: never
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReplicationPublicationBody']
+      }
+    }
     responses: {
       /** @description Returned when the publication is created. */
       200: {
@@ -22341,7 +22434,11 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        publication_name: string
+        ref: string
+        source_id: number
+      }
       cookie?: never
     }
     requestBody?: never
@@ -22372,7 +22469,10 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        ref: string
+        source_id: number
+      }
       cookie?: never
     }
     requestBody?: never
@@ -24969,6 +25069,23 @@ export interface operations {
       }
       /** @description Failed to update health status. */
       500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  SystemRestartController_restartProject: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      201: {
         headers: {
           [name: string]: unknown
         }
@@ -30651,15 +30768,12 @@ export interface operations {
     parameters: {
       query?: never
       header?: never
-      path: {
-        /** @description Project ref */
-        ref: string
-      }
+      path?: never
       cookie?: never
     }
     requestBody: {
       content: {
-        'application/json': components['schemas']['RestartProjectInfo']
+        'application/json': components['schemas']['RestartProjectBodyDto']
       }
     }
     responses: {

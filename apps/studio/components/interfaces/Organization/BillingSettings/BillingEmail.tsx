@@ -26,6 +26,7 @@ import {
   MultiSelectorTrigger,
 } from 'ui-patterns/multi-select'
 import { z } from 'zod'
+import { InfoTooltip } from 'ui-patterns/info-tooltip'
 
 const formSchema = z.object({
   billingEmail: z.string().email().optional(),
@@ -153,7 +154,13 @@ const BillingEmail = () => {
                     name="additionalBillingEmails"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Additional emails</FormLabel>
+                        <FormLabel className="flex items-center space-x-1">
+                          <span>Additional emails</span>
+
+                          <InfoTooltip>
+                            These email addresses will be CC'd in automated invoice emails.
+                          </InfoTooltip>
+                        </FormLabel>
                         <FormControl>
                           <MultiSelector values={field.value} onValuesChange={field.onChange}>
                             <MultiSelectorTrigger
